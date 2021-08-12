@@ -1194,6 +1194,9 @@
 					buf += '<span class="detailcell"><label>Happiness</label>' + (typeof set.happiness === 'number' ? set.happiness : 255) + '</span>';
 				}
 				buf += '<span class="detailcell"><label>Shiny</label>' + (set.shiny ? 'Yes' : 'No') + '</span>';
+				buf += '<span class="detailcell"><label>Starting HP</label>' + (set.startHP) + '</span>';
+				buf += '<span class="detailcell"><label>Status</label>' + (set.startStatus) + '</span>';
+				buf += '<span class="detailcell"><label>Extra Abilities</label>' + (set.abilities) + '</span>';
 				if (!isLetsGo) {
 					if (this.curTeam.gen === 8 && !isNatDex) {
 						// Hidden Power isn't in normal Gen 8
@@ -1221,6 +1224,9 @@
 			buf += '</div>';
 			buf += '<div class="setcell setcell-typeicons">';
 			var types = species.types;
+			if (set.types && set.types.join("/") != "") {
+				types = set.types;
+			} 
 			if (types) {
 				for (var i = 0; i < types.length; i++) buf += Dex.getTypeIcon(types[i]);
 			}
@@ -2587,6 +2593,16 @@
 				buf += '<label><input type="radio" name="shiny" value="no"' + (!set.shiny ? ' checked' : '') + ' /> No</label>';
 				buf += '</div></div>';
 
+				buf += '<div class="formrow"><label class="formlabel">Starting HP:</label><div><input type="number" min="1" max="999" step="1" name="starthp" value="' + (typeof set.startHP === 'number' ? set.startHP : 1) + '" class="textbox inputform numform" /></div></div>';
+				buf += '<div class="formrow"><label class="formlabel">Status:</label><div>';
+				buf += '<label><input type="radio" name="startstatus" value="frz"' + (set.startStatus === 'frz' ? ' checked' : '') + ' /> Freeze</label> ';
+				buf += '<label><input type="radio" name="startstatus" value="brn"' + (set.startStatus === 'brn' ? ' checked' : '') + ' /> Burn</label>';
+				buf += '<label><input type="radio" name="startstatus" value="par"' + (set.startStatus === 'par' ? ' checked' : '') + ' /> Para</label>';
+				buf += '<label><input type="radio" name="startstatus" value="slp"' + (set.startStatus === 'psn' ? ' checked' : '') + ' /> Sleep</label>';
+				buf += '<label><input type="radio" name="startstatus" value="psn"' + (set.startStatus === 'psn' ? ' checked' : '') + ' /> Poison</label>';
+				buf += '<label><input type="radio" name="startstatus" value="tox"' + (set.startStatus === 'tox' ? ' checked' : '') + ' /> Toxic</label>';
+				buf += '<label><input type="radio" name="startstatus" value="N/A"' + (set.startStatus === 'N/A' ? ' checked' : '') + ' /> N/A</label>';
+				buf += '</div></div>';
 				if (species.canGigantamax) {
 					buf += '<div class="formrow"><label class="formlabel">Gigantamax:</label></div>';
 					buf += '<label><input type="radio" name="gigantamax" value="yes"' + (set.gigantamax ? ' checked' : '') + ' /> Yes</label> ';
@@ -2643,6 +2659,16 @@
 			var level = parseInt(this.$chart.find('input[name=level]').val(), 10);
 			if (!level || level > 100 || level < 1) level = 100;
 			if (level !== 100 || set.level) set.level = level;
+
+			// startHP
+			var startHP = parseInt(this.$chart.find('input[name=starthp]').val(), 10);
+			if (!startHP || startHP > 999 || startHP < 1) startHP = 1;
+			if (startHP !== 100 || set.startHP) set.startHP = startHP;
+
+			// StartStatus
+			var startStatus = this.$chart.find('input[name=startstatus]:checked').val()
+			if (!startStatus) set.startStatus = 'N/A';
+			else set.startStatus = startStatus;
 
 			// happiness
 			var happiness = parseInt(this.$chart.find('input[name=happiness]').val(), 10);
@@ -2708,6 +2734,9 @@
 					if (this.curTeam.gen < 8 || isNatDex) buf += '<span class="detailcell"><label>Happiness</label>' + (typeof set.happiness === 'number' ? set.happiness : 255) + '</span>';
 				}
 				buf += '<span class="detailcell"><label>Shiny</label>' + (set.shiny ? 'Yes' : 'No') + '</span>';
+				buf += '<span class="detailcell"><label>Starting HP</label>' + (set.startHP) + '</span>';
+				buf += '<span class="detailcell"><label>Status</label>' + (set.startStatus) + '</span>';
+				buf += '<span class="detailcell"><label>Extra Abilities</label>' + (set.abilities) + '</span>';
 				if (!isLetsGo && (this.curTeam.gen < 8 || isNatDex)) buf += '<span class="detailcell"><label>HP Type</label>' + (set.hpType || 'Dark') + '</span>';
 				if (this.curTeam.gen === 8) {
 					if (species.canGigantamax) {
@@ -3160,6 +3189,10 @@
 			set.name = "";
 			set.species = val;
 			if (set.level) delete set.level;
+			if (set.startHP) delete set.startHP;
+			if (set.startStatus) delete set.startStatus;
+			if (set.abilities) delete set.abilities;
+			if (set.types) delete set.types;
 			if (this.curTeam && this.curTeam.format) {
 				var baseFormat = this.curTeam.format;
 				var format = window.BattleFormats && window.BattleFormats[baseFormat];

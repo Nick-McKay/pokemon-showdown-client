@@ -2060,6 +2060,23 @@ interface PokemonSet {
 	ivs?: StatsTable;
 	/** Defaults as you'd expect (100 normally, 50 in VGC-likes, 5 in LC) */
 	level?: number;
+	/**
+	* If declared, this determines the starting HP value for a Pokemon.
+	*/
+	startHP?: number;
+	/**
+	* If declared, this determines the starting 
+	* non-volatile status condition affecting for a Pokemon.
+	*/
+	startStatus?: string;
+	/**
+	* This overrides the type(s) of a Pokemon.
+	*/
+	types?: string[];
+	/**
+	* This adds more abilities to a Pokemon.
+	*/
+	abilities?: string[];
 	/** Defaults to no (error if shiny event) */
 	shiny?: boolean;
 	/** Defaults to 255 unless you have Frustration, in which case 0 */

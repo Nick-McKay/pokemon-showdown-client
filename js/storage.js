@@ -768,10 +768,28 @@ Storage.packTeam = function (team) {
 			buf += '|';
 		}
 
-		if (set.pokeball || (set.hpType && !hasHP) || set.gigantamax) {
+		if (set.pokeball || (set.hpType && !hasHP) || set.gigantamax || set.startHP || set.abilities || set.startStatus || set.types) {
 			buf += ',' + (set.hpType || '');
 			buf += ',' + toID(set.pokeball);
 			buf += ',' + (set.gigantamax ? 'G' : '');
+			buf += ',' + (set.startHP);
+			buf += ',';
+			if(set.abilities) {
+				for (let j = 0; j < set.abilities.length; j++) {
+					let abilityid = toID(set.abilities[j]);
+					if (j && !abilityid) continue;
+					buf += (j ? '/' : '') + abilityid;
+				}
+			}
+			buf += ',' + (set.startStatus);
+			buf += ',';
+			if(set.types) {
+				for (let j = 0; j < set.types.length; j++) {
+					let typeid = toID(set.types[j]);
+					if (j && !typeid) continue;
+					buf += (j ? '/' : '') + typeid;
+				}
+			}
 		}
 	}
 
@@ -876,15 +894,21 @@ Storage.fastUnpackTeam = function (buf) {
 		j = buf.indexOf(']', i);
 		var misc = undefined;
 		if (j < 0) {
-			if (i < buf.length) misc = buf.substring(i).split(',', 4);
+			if (i < buf.length) misc = buf.substring(i).split(',', 8);
 		} else {
-			if (i !== j) misc = buf.substring(i, j).split(',', 4);
+			if (i !== j) misc = buf.substring(i, j).split(',', 8);
 		}
 		if (misc) {
 			set.happiness = (misc[0] ? Number(misc[0]) : 255);
 			set.hpType = misc[1];
 			set.pokeball = misc[2];
 			set.gigantamax = !!misc[3];
+			set.startHP = misc[4] ? Number(misc[4]) : 1;
+			set.abilities = misc[5]? misc[5].split('/').map(name =>
+				Dex.abilities.get(name).name) : [];
+			set.startStatus = misc[6]? misc[6] : 'N/A';
+			set.types = misc[7]? misc[7].split('/').map(name =>
+				Dex.types.get(name).name) : [];
 		}
 		if (j < 0) break;
 		i = j + 1;
@@ -992,15 +1016,21 @@ Storage.unpackTeam = function (buf) {
 		j = buf.indexOf(']', i);
 		var misc = undefined;
 		if (j < 0) {
-			if (i < buf.length) misc = buf.substring(i).split(',', 4);
+			if (i < buf.length) misc = buf.substring(i).split(',', 8);
 		} else {
-			if (i !== j) misc = buf.substring(i, j).split(',', 4);
+			if (i !== j) misc = buf.substring(i, j).split(',', 8);
 		}
 		if (misc) {
 			set.happiness = (misc[0] ? Number(misc[0]) : 255);
 			set.hpType = misc[1];
 			set.pokeball = misc[2];
 			set.gigantamax = !!misc[3];
+			set.startHP = misc[4] ? Number(misc[4]) : 1;
+			set.abilities = misc[5]? misc[5].split('/').map(name =>
+				Dex.abilities.get(name).name) : [];
+			set.startStatus = misc[6]? misc[6] : 'N/A';
+			set.types = misc[7]? misc[7].split('/').map(name =>
+				Dex.types.get(name).name) : [];
 		}
 		if (j < 0) break;
 		i = j + 1;
@@ -1170,6 +1200,18 @@ Storage.importTeam = function (buffer, teams) {
 		} else if (line.substr(0, 7) === 'Level: ') {
 			line = line.substr(7);
 			curSet.level = +line;
+		} else if (line.startsWith('StartHP: ')) {
+			line = line.slice(9);
+			curSet.startHP = +line;
+		} else if (line.startsWith('Types: ')) {
+			line = line.slice(7);
+			curSet.types = line.split('/');
+		} else if (line.startsWith('Extra Abilities: ')) {
+			line = line.slice(17);
+			curSet.abilities = line.split('/');
+		} else if (line.startsWith('StartStatus: ')) {
+			line = line.slice(13);
+			curSet.startStatus = line;
 		} else if (line.substr(0, 11) === 'Happiness: ') {
 			line = line.substr(11);
 			curSet.happiness = +line;
@@ -1290,6 +1332,18 @@ Storage.exportTeam = function (team) {
 		}
 		if (curSet.shiny) {
 			text += 'Shiny: Yes  \n';
+		}
+		if (curSet.startHP) {
+			text += 'StartHP: ' + curSet.startHP + "  \n";
+		}
+		if (curSet.types) {
+			text += `Types: ${curSet.types.join("/")}  \n`;
+		}
+		if (curSet.abilities) {
+			text += `Extra Abilities: ${curSet.abilities.join("/")}  \n`;
+		}
+		if (curSet.startStatus) {
+			text += `StartStatus: ${curSet.startStatus}  \n`;
 		}
 		if (typeof curSet.happiness === 'number' && curSet.happiness !== 255 && !isNaN(curSet.happiness)) {
 			text += 'Happiness: ' + curSet.happiness + "  \n";

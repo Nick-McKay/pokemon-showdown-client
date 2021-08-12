@@ -96,14 +96,42 @@ class PSTeambuilder {
 				buf += '|';
 			}
 
-			if (set.pokeball || (set.hpType && toID(set.hpType) !== hasHP) || set.gigantamax) {
+			if (set.pokeball || (set.hpType && toID(set.hpType) !== hasHP) || set.gigantamax || set.startHP || set.abilities || set.startStatus || set.types) {
 				buf += ',' + (set.hpType || '');
 				buf += ',' + toID(set.pokeball);
 				buf += ',' + (set.gigantamax ? 'G' : '');
+				buf += ',' + (set.startHP);
+				buf += ',';
+				if(set.abilities) {
+					for (let j = 0; j < set.abilities.length; j++) {
+						let abilityid = toID(set.abilities[j]);
+						if (j && !abilityid) continue;
+						buf += (j ? '/' : '') + abilityid;
+					}
+				}
+				buf += ',' + (set.startStatus);
+				buf += ',';
+				if(set.types) {
+					for (let j = 0; j < set.types.length; j++) {
+						let typeid = toID(set.types[j]);
+						if (j && !typeid) continue;
+						buf += (j ? '/' : '') + typeid;
+					}
+				}
 			}
 		}
 
 		return buf;
+	}
+
+	/** Will not entirely recover a packed name, but will be a pretty readable guess */
+	static unpackName(name: string, dexTable?: {get: (name: string) => AnyObject}) {
+		if (!name) return '';
+		if (dexTable) {
+			const obj = dexTable.get(name);
+			if (obj.exists) return obj.name;
+		}
+		return name.replace(/([0-9]+)/g, ' $1 ').replace(/([A-Z])/g, ' $1').replace(/[ ][ ]/g, ' ').trim();
 	}
 
 	static unpackTeam(buf: string) {
@@ -186,11 +214,17 @@ class PSTeambuilder {
 
 			// happiness
 			if (parts[11]) {
-				let misc = parts[11].split(',', 4);
+				let misc = parts[11].split(',', 8);
 				set.happiness = (misc[0] ? Number(misc[0]) : undefined);
 				set.hpType = misc[1];
 				set.pokeball = misc[2];
 				set.gigantamax = !!misc[3];
+				set.startHP = misc[4] ? Number(misc[4]) : 1;
+				set.abilities = misc[5]? misc[5].split('/').map(name =>
+					Dex.abilities.get(name).name) : [];
+				set.startStatus = misc[6] ? misc[6] : "N/A";
+				set.types = misc[7]? misc[7].split('/').map(name =>
+					Dex.types.get(name).name) : [];
 			}
 		}
 
@@ -275,6 +309,18 @@ class PSTeambuilder {
 		if (set.shiny) {
 			text += `Shiny: Yes  \n`;
 		}
+		if (set.startHP) {
+			text += `StartHP: ${set.startHP}  \n`;
+		}
+		if (set.types) {
+			text += `Types: ${set.types.join("/")}  \n`;
+		}
+		if (set.abilities) {
+			text += `Extra Abilities: ${set.abilities.join("/")}  \n`;
+		}
+		if (set.startStatus) {
+			text += `StartStatus: ${set.startStatus}  \n`;
+		}
 		if (typeof set.happiness === 'number' && set.happiness !== 255 && !isNaN(set.happiness)) {
 			text += `Happiness: ${set.happiness}  \n`;
 		}
@@ -338,6 +384,18 @@ class PSTeambuilder {
 		} else if (line.startsWith('Level: ')) {
 			line = line.slice(7);
 			set.level = +line;
+		} else if (line.startsWith('StartHP: ')) {
+			line = line.slice(9);
+			set.startHP = +line;
+		} else if (line.startsWith('Types: ')) {
+			line = line.slice(7);
+			set.types = line.split('/');
+		} else if (line.startsWith('Extra Abilities: ')) {
+			line = line.slice(17);
+			set.types = line.split('/');
+		} else if (line.startsWith('StartStatus: ')) {
+			line = line.slice(13);
+			set.startStatus = line;
 		} else if (line.startsWith('Happiness: ')) {
 			line = line.slice(11);
 			set.happiness = +line;
