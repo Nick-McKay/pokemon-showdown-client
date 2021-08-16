@@ -1210,6 +1210,7 @@ if(id==='metronome')return true;
 
 if(itemid==='pidgeotite')abilityid='noguard';
 if(itemid==='blastoisinite')abilityid='megalauncher';
+if(itemid==='kabutopsite')abilityid='bulletproof';
 if(itemid==='aerodactylite')abilityid='toughclaws';
 if(itemid==='glalitite')abilityid='refrigerate';
 
